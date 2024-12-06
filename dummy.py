@@ -4,7 +4,7 @@ import random
 import time
 
 # URL endpoint API Django
-url = "http://localhost:8000/update_status"  # Ganti dengan URL API Anda
+url = "http://192.168.1.6:8000/update_status"  # Ganti dengan URL API Anda
 
 # Header untuk request
 headers = {"Content-Type": "application/json"}
