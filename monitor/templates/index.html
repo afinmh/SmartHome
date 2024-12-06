@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHome Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 30px;
+            max-width: 1100px;
+            margin: 0 auto;
+            margin-left: 30px;
+        }
+        .status-item {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .status-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        .status-item p {
+            margin: 10px 0;
+            font-size: 18px;
+            color: #555;
+        }
+        .status-item p strong {
+            color: #333;
+        }
+        .status-item span {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .status-item .icon {
+            font-size: 24px;
+            color: #007bff;
+            margin-right: 10px;
+        }
+        .status-item .status-detail {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .status-item .status-detail:last-child {
+            margin-bottom: 0;
+        }
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            grid-column: span 2;
+        }
+    </style>
+    <script>
+        async function updateStatus() {
+            const response = await fetch('/status');
+            const data = await response.json();
+
+            // Log data for debugging
+            console.log(data);
+
+            // Update the status data
+            document.getElementById('suhu').innerText = data.Suhu + " °C";
+            document.getElementById('hujan').innerText = data.Hujan;
+            document.getElementById('kipas').innerText = data.Kipas;
+            document.getElementById('pintu').innerText = data.Pintu;
+            document.getElementById('gas').innerText = data.Gas;
+            document.getElementById('gas_indikasi').innerText = data.Gas_Indikasi;
+            document.getElementById('lampu').innerText = data.Lampu;
+            document.getElementById('buzzer').innerText = data.Buzzer;
+
+            // Update charts with the latest data
+            updateCharts(data.Suhu, data.Gas);
+        }
+
+        setInterval(updateStatus, 2000); // Update every 2 seconds
+        window.onload = updateStatus;
+
+        function updateCharts(suhu, gas) {
+            if (isNaN(suhu) || isNaN(gas)) {
+                console.log("Invalid data for suhu or gas", suhu, gas);
+                return;
+            }
+
+            // Update Suhu Chart
+            suhuChart.data.labels.push(new Date().toLocaleTimeString());
+            suhuChart.data.datasets[0].data.push(suhu);
+            if (suhuChart.data.labels.length > 10) {
+                suhuChart.data.labels.shift();
+                suhuChart.data.datasets[0].data.shift();
+            }
+            suhuChart.update();
+
+            // Update Gas Chart
+            gasChart.data.labels.push(new Date().toLocaleTimeString());
+            gasChart.data.datasets[0].data.push(gas);
+            if (gasChart.data.labels.length > 10) {
+                gasChart.data.labels.shift();
+                gasChart.data.datasets[0].data.shift();
+            }
+            gasChart.update();
+        }
+
+        let suhuChart, gasChart;
+
+        window.onload = () => {
+            const suhuContext = document.getElementById('suhuChart').getContext('2d');
+            suhuChart = new Chart(suhuContext, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Suhu (°C)',
+                        borderColor: '#FF5733',
+                        backgroundColor: 'rgba(255, 87, 51, 0.2)',
+                        data: [],
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            const gasContext = document.getElementById('gasChart').getContext('2d');
+            gasChart = new Chart(gasContext, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Gas Level',
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                        data: [],
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        };
+    </script>
+</head>
+<body>
+    <h1>SmartHome Dashboard</h1>
+    <div class="container">
+        <!-- Status Item 1 + Chart Suhu -->
+        <div class="status-item">
+            <div class="status-detail">
+                <i class="icon">🌡️</i>
+                <p><strong>Suhu:</strong> <span id="suhu">Loading...</span></p>
+            </div>
+            <div class="status-detail">
+                <i class="icon">🌧️</i>
+                <p><strong>Hujan:</strong> <span id="hujan">Loading...</span></p>
+            </div>
+            <div class="status-detail">
+                <i class="icon">🌀</i>
+                <p><strong>Kipas:</strong> <span id="kipas">Loading...</span></p>
+            </div>
+            <div class="status-detail">
+                <i class="icon">🚪</i>
+                <p><strong>Pintu:</strong> <span id="pintu">Loading...</span></p>
+            </div>
+        </div>
+        <canvas id="suhuChart"></canvas>
+
+        <!-- Status Item 2 + Chart Gas -->
+        <div class="status-item" style="margin-top: 35px; margin-bottom: 35px;">
+            <div class="status-detail">
+                <i class="icon">💨</i>
+                <p><strong>Gas:</strong> <span id="gas">Loading...</span></p>
+            </div>
+            <div class="status-detail">
+                <i class="icon">⚠️</i>
+                <p><strong>Indikasi Gas:</strong> <span id="gas_indikasi">Loading...</span></p>
+            </div>
+            <div class="status-detail">
+                <i class="icon">💡</i>
+                <p><strong>Lampu:</strong> <span id="lampu">Loading...</span></p>
+            </div>
+            <div class="status-detail">
+                <i class="icon">🔊</i>
+                <p><strong>Buzzer:</strong> <span id="buzzer">Loading...</span></p>
+            </div>
+        </div>
+        <canvas id="gasChart" style="margin-top: 35px; margin-bottom: 35px;"></canvas>
+    </div>
+</body>
+</html>
