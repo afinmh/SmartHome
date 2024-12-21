@@ -4,30 +4,32 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 status_data = {
-    "Suhu": 0.0,  # Suhu dalam derajat Celsius
-    "Gas": 0,  # Nilai gas dalam rentang 0-1023
-    "Gas_Indikasi": "Bersih",  # Indikasi gas
-    "Hujan": "Tidak",  # Hujan bisa 'Ya' atau 'Tidak'
-    "Pintu": "Lock",  # Pintu bisa 'Lock' atau 'Unlock'
-    "Kipas": "Off",  # Kipas bisa 'On' atau 'Off'
-    "Lampu": "Off",  # Lampu bisa 'On' atau 'Off'
-    "Buzzer": "Off",  # Lampu bisa 'On' atau 'Off'
+    "contoh": {"Jarak": 0.0},
+    "kelompok_1": {"Jarak": 0.0},
+    "kelompok_2": {"Jarak": 0.0},
+    "kelompok_3": {"Jarak": 0.0},
+    "kelompok_4": {"Jarak": 0.0},
+    "kelompok_5": {"Jarak": 0.0},
+    "kelompok_6": {"Jarak": 0.0},
 }
 
 def index(request):
     return render(request, 'index.html', {"status": status_data})
 
-def get_status(request):
-    return JsonResponse(status_data)
+def get_status(request, group):
+    if group in status_data:
+        return JsonResponse(status_data[group])
+    return JsonResponse({"success": False, "message": f"Group {group} not found"}, status=404)
 
 @csrf_exempt
-def update_status(request):
-    global status_data
+def update_status(request, group):
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            status_data.update(data)
-            return JsonResponse({"success": True, "message": "Status updated"})
-        except Exception as e:
-            return JsonResponse({"success": False, "error": str(e)})
-    return JsonResponse({"success": False, "message": "Invalid request"})
+        if group in status_data:
+            try:
+                data = json.loads(request.body)
+                status_data[group].update(data)
+                return JsonResponse({"success": True, "message": f"Status of {group} updated"})
+            except Exception as e:
+                return JsonResponse({"success": False, "error": str(e)})
+        return JsonResponse({"success": False, "message": f"Group {group} not found"}, status=404)
+    return JsonResponse({"success": False, "message": "Invalid request"}, status=400)
